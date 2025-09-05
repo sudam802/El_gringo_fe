@@ -17,32 +17,37 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
+  e.preventDefault();
+  const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
-    try {
-      const body =
-        mode === "login"
-          ? { email, password }
-          : { fullName, username, email, password };
+  try {
+    const body =
+      mode === "login"
+        ? { email, password }
+        : { fullName, username, email, password };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        credentials: "include",
-      });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      credentials: "include",
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Error");
-      setMessage(data.message);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Error");
+    setMessage(data.message);
 
-      // ✅ Redirect after success
-      if (mode === "login") router.push("/find-partner");
-    } catch (err: any) {
+    // ✅ Redirect after success
+    if (mode === "login") router.push("/find-partner");
+  } catch (err: unknown) {
+    // ✅ Proper error handling for unknown type
+    if (err instanceof Error) {
       setMessage(err.message);
+    } else {
+      setMessage("An unexpected error occurred");
     }
-  };
+  }
+};
 
   return (
     <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
