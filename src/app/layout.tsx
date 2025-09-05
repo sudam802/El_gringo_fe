@@ -1,5 +1,5 @@
 import "./globals.css";
-import Link from "next/link";
+// import Link from "next/link";
 
 export const metadata = {
   title: "Badminton Partner Finder",
