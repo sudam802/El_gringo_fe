@@ -1,10 +1,5 @@
 import "./globals.css";
-// import Link from "next/link";
-
-export const metadata = {
-  title: "Badminton Partner Finder",
-  description: "Find partners, chat, and book courts",
-};
+import Navbar from "@/components/Navbar";
 
 export default function RootLayout({
   children,
@@ -13,10 +8,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900">
-        {/* Navbar */}
-        
-        <main className="p-6">{children}</main>
+      <body>
+        <Navbar />
+        <main className="min-h-screen">{children}</main>
       </body>
     </html>
   );
