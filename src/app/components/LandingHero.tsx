@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function LandingHero() {
   const router = useRouter();
@@ -40,10 +41,13 @@ export default function LandingHero() {
 
         {/* Right Image */}
         <div className="relative w-full h-[320px] md:h-[420px] rounded-2xl overflow-hidden shadow-lg">
-          <img
+          <Image
             src="/hero-sport.png"
             alt="People playing sports together"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
           />
         </div>
 

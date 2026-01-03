@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# local user uploads
+/uploads/avatars/*
+!/uploads/avatars/.gitkeep
+
 # production
 /build
 

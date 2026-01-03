@@ -2,10 +2,29 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import UserAvatar from "@/components/UserAvatar";
+
+type BackendUser = Record<string, unknown>;
+
+function coerceString(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value;
+  return null;
+}
+
+function userIdFromBackendUser(user: BackendUser): string | null {
+  return (
+    coerceString(user._id) ??
+    coerceString(user.id) ??
+    coerceString(user.email) ??
+    coerceString(user.username) ??
+    null
+  );
+}
 
 export default function Navbar() {
   const router = useRouter();
-  const [user, setUser] = useState<null | { username: string; email: string }>(null);
+  const [user, setUser] = useState<null | BackendUser>(null);
+  const [avatarVersion, setAvatarVersion] = useState<number>(0);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -27,21 +46,36 @@ export default function Navbar() {
   // On mount, check auth and subscribe to auth/storage events
   useEffect(() => {
     checkAuth();
+    try {
+      const v = Number(localStorage.getItem("avatar") ?? "0");
+      if (Number.isFinite(v) && v > 0) setAvatarVersion(v);
+    } catch {}
 
-    const onAuthEvent = () => {
-      checkAuth();
+    const onAuthEvent = () => checkAuth();
+    const onAvatarEvent = () => {
+      const v = Date.now();
+      setAvatarVersion(v);
+      try {
+        localStorage.setItem("avatar", String(v));
+      } catch {}
     };
     const onStorage = (e: StorageEvent) => {
       if (e.key === "auth") {
         checkAuth();
       }
+      if (e.key === "avatar") {
+        const v = Number(e.newValue ?? "0");
+        if (Number.isFinite(v) && v > 0) setAvatarVersion(v);
+      }
     };
 
     window.addEventListener("auth", onAuthEvent);
+    window.addEventListener("avatar", onAvatarEvent);
     window.addEventListener("storage", onStorage);
 
     return () => {
       window.removeEventListener("auth", onAuthEvent);
+      window.removeEventListener("avatar", onAvatarEvent);
       window.removeEventListener("storage", onStorage);
     };
   }, [checkAuth]);
@@ -63,6 +97,11 @@ export default function Navbar() {
     }
   };
 
+  const userId = user ? userIdFromBackendUser(user) : null;
+  const displayName =
+    (user && (coerceString(user.username) ?? coerceString(user.fullName) ?? coerceString(user.email))) ||
+    "Account";
+
   return (
     <nav className="flex justify-between items-center px-8 py-4 shadow-md bg-white">
       <h1
@@ -75,9 +114,19 @@ export default function Navbar() {
       <div className="space-x-4">
         {user ? (
           <>
-            <span className="text-gray-700 font-medium">
-              Hi, {user.username}
-            </span>
+            <button
+              type="button"
+              onClick={() => router.push("/profile")}
+              className="inline-flex items-center gap-2 align-middle"
+              title="Profile"
+            >
+              {userId ? (
+                <UserAvatar userId={userId} name={displayName} version={avatarVersion} />
+              ) : (
+                <span className="inline-block w-8 h-8 rounded-full bg-gray-200" />
+              )}
+              <span className="text-gray-700 font-medium">Hi, {displayName}</span>
+            </button>
             <button
               onClick={handleLogout}
               className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"

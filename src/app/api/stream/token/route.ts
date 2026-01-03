@@ -1,62 +1,30 @@
 import { NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
+import { avatarPathname, readAvatarMeta } from "@/lib/avatarStore";
+import {
+  type BackendMeResponse,
+  fetchBackendMe,
+  getUserIdFromMe,
+  getUserNameFromMe,
+} from "@/lib/backendMe";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type BackendMeResponse =
-  | { user?: Record<string, unknown> }
-  | Record<string, unknown>;
+function requestOrigin(req: Request) {
+  const url = new URL(req.url);
+  return `${url.protocol}//${url.host}`;
+}
 
 function coerceString(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) return value;
   return null;
 }
 
-function getUserIdFromMe(payload: BackendMeResponse): string | null {
-  const rawUser =
-    typeof payload === "object" && payload && "user" in payload
-      ? (payload as { user?: unknown }).user
-      : payload;
-  if (!rawUser || typeof rawUser !== "object") return null;
-
-  const obj = rawUser as Record<string, unknown>;
-  return (
-    coerceString(obj._id) ??
-    coerceString(obj.id) ??
-    coerceString(obj.email) ??
-    coerceString(obj.username) ??
-    null
-  );
-}
-
-function getUserNameFromMe(payload: BackendMeResponse): string {
-  const rawUser =
-    typeof payload === "object" && payload && "user" in payload
-      ? (payload as { user?: unknown }).user
-      : payload;
-  if (!rawUser || typeof rawUser !== "object") return "Me";
-
-  const obj = rawUser as Record<string, unknown>;
-  return (
-    coerceString(obj.username) ??
-    coerceString(obj.fullName) ??
-    coerceString(obj.email) ??
-    "Me"
-  );
-}
-
 export async function GET(req: Request) {
   const apiKey = process.env.STREAM_API_KEY ?? process.env.NEXT_PUBLIC_STREAM_API_KEY;
   const apiSecret = process.env.STREAM_API_SECRET;
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-  if (!backendUrl) {
-    return NextResponse.json(
-      { message: "Missing NEXT_PUBLIC_BACKEND_URL" },
-      { status: 500 }
-    );
-  }
   if (!apiKey) {
     return NextResponse.json(
       { message: "Missing STREAM_API_KEY / NEXT_PUBLIC_STREAM_API_KEY" },
@@ -71,12 +39,7 @@ export async function GET(req: Request) {
   const partnerId = coerceString(searchParams.get("partnerId"));
   const partnerName = coerceString(searchParams.get("partnerName"));
 
-  const cookie = req.headers.get("cookie") ?? "";
-
-  const meRes = await fetch(`${backendUrl}/api/auth/me`, {
-    headers: cookie ? { cookie } : undefined,
-    cache: "no-store",
-  });
+  const meRes = await fetchBackendMe(req);
 
   if (meRes.status === 401) {
     return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
@@ -100,15 +63,30 @@ export async function GET(req: Request) {
 
   const serverClient = StreamChat.getInstance(apiKey, apiSecret);
   const token = serverClient.createToken(userId);
+  const origin = requestOrigin(req);
+
+  const myAvatarMeta = await readAvatarMeta(userId);
+  const myImage = myAvatarMeta
+    ? `${origin}${avatarPathname(userId, myAvatarMeta.updatedAt)}`
+    : undefined;
 
   let channelId: string | null = null;
   if (partnerId) {
     const members = [userId, partnerId];
     channelId = members.slice().sort().join("__");
 
+    const partnerAvatarMeta = await readAvatarMeta(partnerId);
+    const partnerImage = partnerAvatarMeta
+      ? `${origin}${avatarPathname(partnerId, partnerAvatarMeta.updatedAt)}`
+      : undefined;
+
     await serverClient.upsertUsers([
-      { id: userId, name },
-      { id: partnerId, name: partnerName ?? "Partner" },
+      { id: userId, name, ...(myImage ? { image: myImage } : {}) },
+      {
+        id: partnerId,
+        name: partnerName ?? "Partner",
+        ...(partnerImage ? { image: partnerImage } : {}),
+      },
     ]);
 
     const channel = serverClient.channel("messaging", channelId, { members });
@@ -118,13 +96,15 @@ export async function GET(req: Request) {
       // If it already exists, create() can fail in some cases; we only need it to exist.
     }
   } else {
-    await serverClient.upsertUsers([{ id: userId, name }]);
+    await serverClient.upsertUsers([
+      { id: userId, name, ...(myImage ? { image: myImage } : {}) },
+    ]);
   }
 
   return NextResponse.json({
     apiKey,
     token,
-    user: { id: userId, name },
+    user: { id: userId, name, ...(myImage ? { image: myImage } : {}) },
     channelId,
   });
 }

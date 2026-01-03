@@ -15,7 +15,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 type StreamTokenResponse = {
   apiKey: string;
   token: string;
-  user: { id: string; name: string };
+  user: { id: string; name: string; image?: string };
   channelId: string | null;
 };
 
@@ -55,7 +55,10 @@ export default function ChatPage() {
         if (!user?.id) throw new Error("Missing user id");
 
         client = StreamChat.getInstance(apiKey);
-        await client.connectUser({ id: user.id, name: user.name }, token);
+        await client.connectUser(
+          { id: user.id, name: user.name, ...(user.image ? { image: user.image } : {}) },
+          token
+        );
 
         if (cancelled) return;
         setChatClient(client);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import UserAvatar from "@/components/UserAvatar";
 
 type Partner = {
   _id?: string;
@@ -77,14 +78,19 @@ export default function FindPartner() {
         {partners.map((p) => {
           const key = p._id ?? p.id ?? p.email ?? cryptoRandomKey();
           const displayName = p.username ?? p.email ?? "Unknown";
+          const partnerId = String(p._id ?? p.id ?? "");
 
           return (
             <div key={key} className="bg-white rounded-lg shadow-md ...">
               <div className="p-4 flex items-center gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-lg font-semibold text-gray-700">
-                    {initials(displayName)}
-                  </div>
+                  {partnerId ? (
+                    <UserAvatar userId={partnerId} name={displayName} size={56} />
+                  ) : (
+                    <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-lg font-semibold text-gray-700">
+                      {initials(displayName)}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex-1">
@@ -114,12 +120,12 @@ export default function FindPartner() {
                       Add Friend
                     </button>
                     <button
-                      onClick={() => startChat(String(p._id ?? p.id ?? ""), displayName)}
-                      disabled={startingChatId === String(p._id ?? p.id)}
+                      onClick={() => startChat(partnerId, displayName)}
+                      disabled={startingChatId === partnerId}
                       className="flex-1 py-2 px-3 rounded-md bg-gray-200 text-gray-700 text-sm hover:bg-gray-300 transition disabled:opacity-60"
                       aria-label={`Message ${displayName}`}
                     >
-                      {startingChatId === String(p._id ?? p.id) ? "Opening…" : "Message"}
+                      {startingChatId === partnerId ? "Opening…" : "Message"}
                     </button>
                   </div>
                 </div>
