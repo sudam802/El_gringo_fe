@@ -509,7 +509,8 @@ export default function FeedPage() {
 
                       {mediaSrc ? (
                         <div className="border-t border-slate-200/70 bg-white">
-                          {p.media.type === "video" ? (
+                          {p.media && p.media.type === "video" ? (
+
                             <video
                               controls
                               src={mediaSrc}
