@@ -2,6 +2,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### 1) Start the backend (required)
+
+```bash
+cd backend
+npm install
+set JWT_SECRET=dev-secret
+npm run dev
+```
+
+Backend runs on `http://localhost:5000` by default.
+
+### 2) Start the Next.js frontend
+
 First, run the development server:
 
 ```bash
@@ -15,6 +28,8 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+The frontend expects `NEXT_PUBLIC_BACKEND_URL` in `.env.local` (example: `http://localhost:5000`).
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

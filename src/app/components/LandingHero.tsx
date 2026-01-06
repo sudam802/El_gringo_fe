@@ -14,7 +14,7 @@ export default function LandingHero() {
         <div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
             Find Sports Partners <br />
-            <span className="text-blue-600">Near You</span>
+            <span className="text-emerald-600">Near You</span>
           </h1>
 
           <p className="mt-4 text-lg text-gray-600 max-w-xl">
@@ -25,14 +25,14 @@ export default function LandingHero() {
           <div className="mt-8 flex gap-4">
             <button
               onClick={() => router.push("/auth/signup")}
-              className="px-6 py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
+              className="px-6 py-3 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700"
             >
               Get Started
             </button>
 
             <button
               onClick={() => router.push("/auth/login")}
-              className="px-6 py-3 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50"
+              className="px-6 py-3 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"
             >
               Login
             </button>

@@ -26,6 +26,7 @@ export default function ChatPage() {
   const partnerName = (searchParams.get("name") ?? "Partner").toString();
   const [chatClient, setChatClient] = useState<StreamChat | null>(null);
   const [serverChannelId, setServerChannelId] = useState<string | null>(null);
+  const [canMessage, setCanMessage] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,6 +36,30 @@ export default function ChatPage() {
     const init = async () => {
       try {
         if (!partnerId) return;
+        setError(null);
+        setCanMessage(null);
+        setChatClient(null);
+        setServerChannelId(null);
+
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        if (!backendUrl) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
+
+        const statusRes = await fetch(
+          `${backendUrl}/api/friends/status?userId=${encodeURIComponent(partnerId)}`,
+          { credentials: "include", cache: "no-store" }
+        );
+        if (statusRes.status === 401) {
+          router.push("/auth/login");
+          return;
+        }
+        if (!statusRes.ok) throw new Error("Failed to check friendship status");
+        const statusPayload = (await statusRes.json()) as { canMessage?: boolean };
+        if (!statusPayload?.canMessage) {
+          setCanMessage(false);
+          return;
+        }
+        setCanMessage(true);
+
         const qs = new URLSearchParams();
         qs.set("partnerId", partnerId);
         qs.set("partnerName", partnerName);
@@ -46,7 +71,14 @@ export default function ChatPage() {
           router.push("/auth/login");
           return;
         }
-        if (!res.ok) throw new Error("Failed to create Stream token");
+        if (!res.ok) {
+          const contentType = res.headers.get("content-type") ?? "";
+          if (contentType.includes("application/json")) {
+            const body = (await res.json()) as { message?: string };
+            throw new Error(body?.message || "Failed to start chat");
+          }
+          throw new Error((await res.text()) || "Failed to start chat");
+        }
 
         const { apiKey, token, user, channelId } =
           (await res.json()) as StreamTokenResponse;
@@ -97,6 +129,16 @@ export default function ChatPage() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-lg w-full rounded-lg border bg-white p-4 text-red-700">
           {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (canMessage === false) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="max-w-lg w-full rounded-lg border bg-white p-4 text-gray-800">
+          You can only message accepted friends.
         </div>
       </div>
     );

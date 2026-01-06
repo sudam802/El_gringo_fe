@@ -19,7 +19,7 @@ export default function HomePage() {
         );
 
         if (res.ok) {
-          router.replace("/find-partner");
+          router.replace("/feed");
           return;
         }
       } catch {

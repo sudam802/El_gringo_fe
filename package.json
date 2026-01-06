@@ -9,9 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "next": "15.5.2",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "next": "^16.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "stream-chat": "^9.27.2",
     "stream-chat-react": "^13.13.1"
   },

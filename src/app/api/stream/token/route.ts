@@ -21,6 +21,23 @@ function coerceString(value: unknown): string | null {
   return null;
 }
 
+async function fetchBackendFriendStatus(req: Request, otherUserId: string) {
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+  if (!backendUrl) {
+    return new Response(JSON.stringify({ message: "Missing NEXT_PUBLIC_BACKEND_URL" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const cookie = req.headers.get("cookie") ?? "";
+  const qs = new URLSearchParams({ userId: otherUserId });
+  return fetch(`${backendUrl}/api/friends/status?${qs.toString()}`, {
+    headers: cookie ? { cookie } : undefined,
+    cache: "no-store",
+  });
+}
+
 export async function GET(req: Request) {
   const apiKey = process.env.STREAM_API_KEY ?? process.env.NEXT_PUBLIC_STREAM_API_KEY;
   const apiSecret = process.env.STREAM_API_SECRET;
@@ -72,6 +89,21 @@ export async function GET(req: Request) {
 
   let channelId: string | null = null;
   if (partnerId) {
+    const statusRes = await fetchBackendFriendStatus(req, partnerId);
+    if (statusRes.status === 401) {
+      return NextResponse.json({ message: "Not authenticated" }, { status: 401 });
+    }
+    if (!statusRes.ok) {
+      return NextResponse.json({ message: "Failed to check friendship status" }, { status: 502 });
+    }
+    const statusPayload = (await statusRes.json()) as { status?: string; canMessage?: boolean };
+    if (!statusPayload?.canMessage) {
+      return NextResponse.json(
+        { message: "You can only message accepted friends" },
+        { status: 403 }
+      );
+    }
+
     const members = [userId, partnerId];
     channelId = members.slice().sort().join("__");
 

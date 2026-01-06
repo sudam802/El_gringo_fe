@@ -11,6 +11,11 @@ function coerceString(value: unknown): string | null {
   return null;
 }
 
+function coerceStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => (typeof v === "string" ? v.trim() : "")).filter(Boolean);
+}
+
 function userIdFromBackendUser(user: BackendUser): string | null {
   return (
     coerceString(user._id) ??
@@ -40,6 +45,12 @@ export default function ProfilePage() {
 
   const userId = useMemo(() => (user ? userIdFromBackendUser(user) : null), [user]);
   const name = useMemo(() => (user ? nameFromBackendUser(user) : "Me"), [user]);
+  const location = useMemo(() => (user ? coerceString(user.location) : null), [user]);
+  const skillLevel = useMemo(() => (user ? coerceString(user.skillLevel) : null), [user]);
+  const preferredSports = useMemo(
+    () => (user ? coerceStringArray(user.preferredSports) : []),
+    [user]
+  );
 
   useEffect(() => {
     try {
@@ -112,7 +123,7 @@ export default function ProfilePage() {
         <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
         <button
           type="button"
-          onClick={() => router.push("/find-partner")}
+          onClick={() => router.push("/find-partner?stay=1")}
           className="text-sm text-gray-700 hover:underline"
         >
           Back
@@ -134,6 +145,15 @@ export default function ProfilePage() {
                 {coerceString(user.email)}
               </div>
             )}
+            {(location || skillLevel || preferredSports.length > 0) && (
+              <div className="text-sm text-gray-700 mt-2 space-y-1">
+                {location && <div>Location: {location}</div>}
+                {preferredSports.length > 0 && (
+                  <div>Preferred sports: {preferredSports.join(", ")}</div>
+                )}
+                {skillLevel && <div>Skill level: {skillLevel}</div>}
+              </div>
+            )}
             <div className="text-xs text-gray-500 mt-1">Upload a JPG/PNG/WebP/GIF/AVIF (max 5MB)</div>
           </div>
         </div>
@@ -149,7 +169,7 @@ export default function ProfilePage() {
             type="button"
             disabled={saving}
             onClick={handleUpload}
-            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
           >
             {saving ? "Uploading..." : "Update picture"}
           </button>

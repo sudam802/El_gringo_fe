@@ -21,6 +21,10 @@
 /uploads/avatars/*
 !/uploads/avatars/.gitkeep
 
+# backend
+/backend/node_modules/
+/backend/data/db.json
+
 # production
 /build
 

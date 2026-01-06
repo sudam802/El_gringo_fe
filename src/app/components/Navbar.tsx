@@ -105,8 +105,8 @@ export default function Navbar() {
   return (
     <nav className="flex justify-between items-center px-8 py-4 shadow-md bg-white">
       <h1
-        className="text-2xl font-bold text-blue-600 cursor-pointer"
-        onClick={() => router.push("/")}
+        className="text-2xl font-bold text-emerald-600 cursor-pointer"
+        onClick={() => router.push(user ? "/feed" : "/")}
       >
         🏅 Sports Partner
       </h1>
@@ -114,6 +114,27 @@ export default function Navbar() {
       <div className="space-x-4">
         {user ? (
           <>
+            <button
+              type="button"
+              onClick={() => router.push("/feed")}
+              className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+            >
+              Feed
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/chat")}
+              className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+            >
+              Chat
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/find-partner?stay=1")}
+              className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              Find Partner
+            </button>
             <button
               type="button"
               onClick={() => router.push("/profile")}
@@ -138,13 +159,13 @@ export default function Navbar() {
           <>
             <button
               onClick={() => router.push("/auth/login")}
-              className="px-4 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+              className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
             >
               Login
             </button>
             <button
               onClick={() => router.push("/auth/signup")}
-              className="px-4 py-2 rounded-lg border border-blue-500 text-blue-500 hover:bg-blue-50"
+              className="px-4 py-2 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"
             >
               Sign Up
             </button>
