@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { authHeader } from "@/lib/authToken";
 
 type BackendUser = Record<string, unknown>;
 
@@ -59,8 +60,14 @@ export default function ProfilePage() {
     } catch {}
 
     const load = async () => {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      if (!base) {
+        router.replace("/auth/login");
+        return;
+      }
+      const res = await fetch(`${base}/api/auth/me`, {
         credentials: "include",
+        headers: authHeader(),
       });
       if (res.status === 401) {
         router.replace("/auth/login");
@@ -92,7 +99,7 @@ export default function ProfilePage() {
     try {
       const formData = new FormData();
       formData.set("file", file);
-      const res = await fetch("/api/avatar", { method: "POST", body: formData });
+      const res = await fetch("/api/avatar", { method: "POST", headers: authHeader(), body: formData });
       const data = (await res.json()) as { message?: string; avatarUrl?: string };
       if (!res.ok) {
         throw new Error(data.message || "Upload failed");

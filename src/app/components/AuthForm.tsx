@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authHeader, setAuthToken } from "@/lib/authToken";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -155,7 +156,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const formData = new FormData();
     formData.set("file", avatarFile);
 
-    const res = await fetch("/api/avatar", { method: "POST", body: formData });
+    const res = await fetch("/api/avatar", {
+      method: "POST",
+      headers: authHeader(),
+      body: formData,
+    });
     const data = (await res.json()) as { message?: string; avatarUrl?: string };
     if (!res.ok) {
       throw new Error(data.message || "Avatar upload failed");
@@ -234,6 +239,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
       if (res.ok) {
         const data = await res.json();
+        setAuthToken((data as { token?: unknown })?.token);
         const successText = (data?.message as string | undefined) || "Success";
         setMessage({ type: "success", text: successText });
 

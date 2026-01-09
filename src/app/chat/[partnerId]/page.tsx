@@ -11,6 +11,7 @@ import {
   Window,
 } from "stream-chat-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { authHeader } from "@/lib/authToken";
 
 type StreamTokenResponse = {
   apiKey: string;
@@ -43,10 +44,11 @@ export default function ChatPage() {
 
         const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
         if (!backendUrl) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
+        const base = String(backendUrl).trim().replace(/\/+$/, "");
 
         const statusRes = await fetch(
-          `${backendUrl}/api/friends/status?userId=${encodeURIComponent(partnerId)}`,
-          { credentials: "include", cache: "no-store" }
+          `${base}/api/friends/status?userId=${encodeURIComponent(partnerId)}`,
+          { credentials: "include", headers: authHeader(), cache: "no-store" }
         );
         if (statusRes.status === 401) {
           router.push("/auth/login");
@@ -65,6 +67,7 @@ export default function ChatPage() {
         qs.set("partnerName", partnerName);
         const res = await fetch(`/api/stream/token?${qs.toString()}`, {
           cache: "no-store",
+          headers: authHeader(),
         });
 
         if (res.status === 401) {

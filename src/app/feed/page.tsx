@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { authHeader } from "@/lib/authToken";
 
 type FeedMedia = { type: "image" | "video"; url: string };
 type FeedPost = {
@@ -79,7 +80,7 @@ function messageFromBody(parsed: { isJson: boolean; body: unknown }): string | n
 
 export default function FeedPage() {
   const router = useRouter();
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
 
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
@@ -108,10 +109,11 @@ export default function FeedPage() {
     }
 
     setError(null);
+    const headers = authHeader();
     const [feedRes, suggestionsRes, requestsRes] = await Promise.all([
-      fetch(`${base}/api/feed`, { credentials: "include" }),
-      fetch(`${base}/api/friends/suggestions?limit=6`, { credentials: "include" }),
-      fetch(`${base}/api/friends/requests`, { credentials: "include" }),
+      fetch(`${base}/api/feed`, { credentials: "include", headers }),
+      fetch(`${base}/api/friends/suggestions?limit=6`, { credentials: "include", headers }),
+      fetch(`${base}/api/friends/requests`, { credentials: "include", headers }),
     ]);
 
     if (feedRes.status === 401 || suggestionsRes.status === 401 || requestsRes.status === 401) {
@@ -190,6 +192,7 @@ export default function FeedPage() {
         ? await fetch(`${base}/api/feed`, {
             method: "POST",
             credentials: "include",
+            headers: authHeader(),
             body: (() => {
               const fd = new FormData();
               if (text.trim()) fd.append("text", text.trim());
@@ -200,7 +203,7 @@ export default function FeedPage() {
           })
         : await fetch(`${base}/api/feed`, {
             method: "POST",
-            headers: { "content-type": "application/json" },
+            headers: { ...authHeader(), "content-type": "application/json" },
             credentials: "include",
             body: JSON.stringify({
               text: text.trim(),
@@ -243,7 +246,7 @@ export default function FeedPage() {
       try {
         const res = await fetch(`${base}/api/friends/request`, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { ...authHeader(), "content-type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ userId: targetUserId }),
         });
@@ -277,7 +280,7 @@ export default function FeedPage() {
       try {
         const res = await fetch(`${base}/api/friends/accept`, {
           method: "POST",
-          headers: { "content-type": "application/json" },
+          headers: { ...authHeader(), "content-type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ userId: fromUserId }),
         });

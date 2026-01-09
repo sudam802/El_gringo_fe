@@ -53,9 +53,14 @@ export async function fetchBackendMe(req: Request): Promise<Response> {
   }
 
   const cookie = req.headers.get("cookie") ?? "";
-  return fetch(`${backendUrl}/api/auth/me`, {
-    headers: cookie ? { cookie } : undefined,
+  const authorization = req.headers.get("authorization") ?? "";
+  const headers: Record<string, string> = {};
+  if (cookie) headers.cookie = cookie;
+  if (authorization) headers.authorization = authorization;
+
+  const base = String(backendUrl).trim().replace(/\/+$/, "");
+  return fetch(`${base}/api/auth/me`, {
+    headers: Object.keys(headers).length ? headers : undefined,
     cache: "no-store",
   });
 }
-

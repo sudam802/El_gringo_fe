@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { authHeader } from "@/lib/authToken";
 
 type Friend = { id?: string; _id?: string; username?: string; email?: string };
 
@@ -16,7 +17,7 @@ function displayName(u: Friend): string {
 
 export default function Chat() {
   const router = useRouter();
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
   const fetchedRef = useRef(false);
 
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -30,7 +31,10 @@ export default function Chat() {
     }
 
     setError(null);
-    const res = await fetch(`${base}/api/friends`, { credentials: "include" });
+    const res = await fetch(`${base}/api/friends`, {
+      credentials: "include",
+      headers: authHeader(),
+    });
 
     if (res.status === 401) {
       router.push("/auth/login");

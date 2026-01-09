@@ -31,9 +31,15 @@ async function fetchBackendFriendStatus(req: Request, otherUserId: string) {
   }
 
   const cookie = req.headers.get("cookie") ?? "";
+  const authorization = req.headers.get("authorization") ?? "";
+  const headers: Record<string, string> = {};
+  if (cookie) headers.cookie = cookie;
+  if (authorization) headers.authorization = authorization;
+
   const qs = new URLSearchParams({ userId: otherUserId });
-  return fetch(`${backendUrl}/api/friends/status?${qs.toString()}`, {
-    headers: cookie ? { cookie } : undefined,
+  const base = String(backendUrl).trim().replace(/\/+$/, "");
+  return fetch(`${base}/api/friends/status?${qs.toString()}`, {
+    headers: Object.keys(headers).length ? headers : undefined,
     cache: "no-store",
   });
 }

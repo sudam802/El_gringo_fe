@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { authHeader } from "@/lib/authToken";
 
 type GeoCoords = { lat: number; lng: number };
 type GeoResult = { displayName: string; lat: number; lng: number };
@@ -78,12 +79,12 @@ export default function EventsPage() {
   const creatingRef = useRef(false);
   const joiningRef = useRef<string | null>(null);
 
-  const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
 
   const refresh = useCallback(async () => {
     if (!base) return;
     setError(null);
-    const res = await fetch(`${base}/api/events`, { credentials: "include" });
+    const res = await fetch(`${base}/api/events`, { credentials: "include", headers: authHeader() });
     if (res.status === 401) {
       router.push("/auth/login");
       return;
@@ -173,7 +174,7 @@ export default function EventsPage() {
     try {
       const res = await fetch(`${base}/api/events`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...authHeader(), "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           title,
@@ -226,6 +227,7 @@ export default function EventsPage() {
       const res = await fetch(`${base}/api/events/${encodeURIComponent(ev.id)}/${action}`, {
         method: "POST",
         credentials: "include",
+        headers: authHeader(),
       });
       if (res.status === 401) {
         router.push("/auth/login");

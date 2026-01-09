@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { authHeader, clearAuthToken } from "@/lib/authToken";
 
 type BackendUser = Record<string, unknown>;
 
@@ -36,6 +37,7 @@ export default function Navbar() {
       }
       const res = await fetch(`${base}/api/auth/me`, {
         credentials: "include",
+        headers: authHeader(),
       });
       if (res.ok) {
         const data = await res.json();
@@ -93,7 +95,9 @@ export default function Navbar() {
       await fetch(`${base}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
+        headers: authHeader(),
       });
+      clearAuthToken();
       setUser(null);
       // notify other parts of the app
       try { window.dispatchEvent(new Event("auth")); } catch {}

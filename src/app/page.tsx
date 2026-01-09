@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LandingHero from "./components/LandingHero";
+import { authHeader } from "@/lib/authToken";
 
 export default function HomePage() {
   const router = useRouter();
@@ -10,12 +11,14 @@ export default function HomePage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
 
     const checkAuth = async () => {
       try {
+        if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`,
-          { credentials: "include", signal: controller.signal }
+          `${base}/api/auth/me`,
+          { credentials: "include", headers: authHeader(), signal: controller.signal }
         );
 
         if (res.ok) {

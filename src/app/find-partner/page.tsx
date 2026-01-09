@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
+import { authHeader } from "@/lib/authToken";
 
 type Partner = {
   _id?: string;
@@ -88,12 +89,13 @@ export default function FindPartner() {
   }, [router, stayOnFindPartner]);
 
   const refreshFriends = useCallback(async () => {
-    const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
     if (!base) return;
 
+    const headers = authHeader();
     const [friendsRes, requestsRes] = await Promise.all([
-      fetch(`${base}/api/friends`, { credentials: "include" }),
-      fetch(`${base}/api/friends/requests`, { credentials: "include" }),
+      fetch(`${base}/api/friends`, { credentials: "include", headers }),
+      fetch(`${base}/api/friends/requests`, { credentials: "include", headers }),
     ]);
 
     if (friendsRes.status === 401 || requestsRes.status === 401) {
@@ -124,9 +126,11 @@ export default function FindPartner() {
 
     const fetchPartners = async () => {
       try {
-        const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/partners/find-partner`;
+        const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+        if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
+        const url = `${base}/api/partners/find-partner`;
         console.debug("FindPartner: fetching", url);
-        const res = await fetch(url, { credentials: "include" });
+        const res = await fetch(url, { credentials: "include", headers: authHeader() });
 
         if (res.status === 401) {
           router.push("/auth/login");
@@ -164,7 +168,7 @@ export default function FindPartner() {
 
   const addFriend = useCallback(
     async (targetUserId: string) => {
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
       if (!base) {
         setError("Missing NEXT_PUBLIC_BACKEND_URL");
         return;
@@ -176,7 +180,7 @@ export default function FindPartner() {
       try {
         const res = await fetch(`${base}/api/friends/request`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...authHeader(), "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ userId: targetUserId }),
         });
@@ -203,7 +207,7 @@ export default function FindPartner() {
 
   const acceptFriend = useCallback(
     async (fromUserId: string) => {
-      const base = process.env.NEXT_PUBLIC_BACKEND_URL;
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
       if (!base) {
         setError("Missing NEXT_PUBLIC_BACKEND_URL");
         return;
@@ -215,7 +219,7 @@ export default function FindPartner() {
       try {
         const res = await fetch(`${base}/api/friends/accept`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { ...authHeader(), "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ userId: fromUserId }),
         });
