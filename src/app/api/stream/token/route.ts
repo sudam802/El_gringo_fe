@@ -16,6 +16,19 @@ function requestOrigin(req: Request) {
   return `${url.protocol}//${url.host}`;
 }
 
+function envPresence() {
+  const streamApiKey = process.env.STREAM_API_KEY;
+  const nextPublicStreamApiKey = process.env.NEXT_PUBLIC_STREAM_API_KEY;
+  const streamApiSecret = process.env.STREAM_API_SECRET;
+  return {
+    VERCEL_ENV: process.env.VERCEL_ENV ?? null,
+    NODE_ENV: process.env.NODE_ENV ?? null,
+    has_STREAM_API_KEY: Boolean(streamApiKey && streamApiKey.trim()),
+    has_NEXT_PUBLIC_STREAM_API_KEY: Boolean(nextPublicStreamApiKey && nextPublicStreamApiKey.trim()),
+    has_STREAM_API_SECRET: Boolean(streamApiSecret && streamApiSecret.trim()),
+  };
+}
+
 function coerceString(value: unknown): string | null {
   if (typeof value === "string" && value.trim()) return value;
   return null;
@@ -50,12 +63,15 @@ export async function GET(req: Request) {
 
   if (!apiKey) {
     return NextResponse.json(
-      { message: "Missing STREAM_API_KEY / NEXT_PUBLIC_STREAM_API_KEY" },
+      { message: "Missing STREAM_API_KEY / NEXT_PUBLIC_STREAM_API_KEY", debug: envPresence() },
       { status: 500 }
     );
   }
   if (!apiSecret) {
-    return NextResponse.json({ message: "Missing STREAM_API_SECRET" }, { status: 500 });
+    return NextResponse.json(
+      { message: "Missing STREAM_API_SECRET", debug: envPresence() },
+      { status: 500 }
+    );
   }
 
   const { searchParams } = new URL(req.url);
