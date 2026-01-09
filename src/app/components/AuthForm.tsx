@@ -179,6 +179,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const url = mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
     try {
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      if (!base) {
+        throw new Error("Missing NEXT_PUBLIC_BACKEND_URL (set it in Vercel env vars and redeploy)");
+      }
+
       if (mode === "signup") {
         if (!fullName.trim()) {
           setMessage({ type: "error", text: "Please enter your full name" });
@@ -218,7 +223,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             };
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}${url}`,
+        `${base}${url}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

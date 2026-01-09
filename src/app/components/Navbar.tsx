@@ -28,7 +28,13 @@ export default function Navbar() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/me`, {
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      if (!base) {
+        console.error("Missing NEXT_PUBLIC_BACKEND_URL (set it in Vercel env vars and redeploy)");
+        setUser(null);
+        return;
+      }
+      const res = await fetch(`${base}/api/auth/me`, {
         credentials: "include",
       });
       if (res.ok) {
@@ -82,7 +88,9 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/logout`, {
+      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
+      await fetch(`${base}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
