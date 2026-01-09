@@ -22,6 +22,11 @@ function envPresence() {
   const streamApiSecret = process.env.STREAM_API_SECRET;
   return {
     VERCEL_ENV: process.env.VERCEL_ENV ?? null,
+    VERCEL_URL: process.env.VERCEL_URL ?? null,
+    VERCEL_PROJECT_ID: process.env.VERCEL_PROJECT_ID ?? null,
+    VERCEL_ORG_ID: process.env.VERCEL_ORG_ID ?? null,
+    VERCEL_GIT_COMMIT_REF: process.env.VERCEL_GIT_COMMIT_REF ?? null,
+    VERCEL_GIT_COMMIT_SHA: process.env.VERCEL_GIT_COMMIT_SHA ?? null,
     NODE_ENV: process.env.NODE_ENV ?? null,
     has_STREAM_API_KEY: Boolean(streamApiKey && streamApiKey.trim()),
     has_NEXT_PUBLIC_STREAM_API_KEY: Boolean(nextPublicStreamApiKey && nextPublicStreamApiKey.trim()),
