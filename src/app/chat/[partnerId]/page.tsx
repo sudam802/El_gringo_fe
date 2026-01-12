@@ -129,8 +129,8 @@ export default function ChatPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-lg w-full rounded-lg border bg-white p-4 text-red-700">
+      <div className="min-h-full flex items-center justify-center p-6">
+        <div className="max-w-lg w-full app-card p-4 text-red-700">
           {error}
         </div>
       </div>
@@ -139,8 +139,8 @@ export default function ChatPage() {
 
   if (canMessage === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="max-w-lg w-full rounded-lg border bg-white p-4 text-gray-800">
+      <div className="min-h-full flex items-center justify-center p-6">
+        <div className="max-w-lg w-full app-card p-4 text-gray-800">
           You can only message accepted friends.
         </div>
       </div>
@@ -149,18 +149,19 @@ export default function ChatPage() {
 
   if (!chatClient || !channel) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-full flex items-center justify-center text-gray-500">
         Loading chat…
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
-      <Chat client={chatClient} theme="messaging light">
-        <Channel channel={channel}>
-          <Window>
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 bg-white">
+    <div className="min-h-full app-container py-6">
+      <div className="app-card overflow-hidden min-h-[70vh]">
+        <Chat client={chatClient} theme="messaging light">
+          <Channel channel={channel}>
+            <Window>
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-slate-200/70 bg-white/70 backdrop-blur">
               <button
                 type="button"
                 onClick={() => router.back()}
@@ -178,7 +179,8 @@ export default function ChatPage() {
           </Window>
           <Thread />
         </Channel>
-      </Chat>
+        </Chat>
+      </div>
     </div>
   );
 }

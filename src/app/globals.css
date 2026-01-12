@@ -2,8 +2,8 @@
 @import "stream-chat-react/dist/css/v2/index.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f9ff;
+  --foreground: #0f172a;
 }
 
 @theme inline {
@@ -15,13 +15,129 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #070b14;
+    --foreground: #e7eefc;
   }
 }
 
+html,
 body {
-  background: var(--background);
+  height: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1200px circle at 10% 0%, rgba(47, 124, 246, 0.18), transparent 48%),
+    radial-gradient(900px circle at 90% 12%, rgba(79, 70, 229, 0.12), transparent 52%),
+    linear-gradient(180deg, rgba(246, 249, 255, 1), rgba(241, 246, 255, 1));
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer components {
+  .app-container {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  .app-card {
+    @apply rounded-3xl bg-white/80 ring-1 ring-slate-200/70 shadow-lg shadow-slate-200/60 backdrop-blur;
+  }
+
+  .app-card-header {
+    @apply px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-white to-slate-50;
+  }
+
+  .btn-primary {
+    @apply rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow-md shadow-blue-200 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply rounded-2xl bg-white px-6 py-3 font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-slate-50 disabled:opacity-60;
+  }
+
+  .btn-soft {
+    @apply rounded-2xl bg-blue-50 px-4 py-2 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 hover:bg-blue-100 disabled:opacity-60;
+  }
+}
+
+@keyframes app-jump-in {
+  0% {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(-7px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes app-glow-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 18px rgba(59, 130, 246, 0);
+  }
+}
+
+@keyframes app-vibrate {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  10% {
+    transform: translate3d(-1px, -1px, 0) rotate(-0.35deg);
+  }
+  20% {
+    transform: translate3d(2px, 0, 0) rotate(0.35deg);
+  }
+  30% {
+    transform: translate3d(-2px, 1px, 0) rotate(-0.25deg);
+  }
+  40% {
+    transform: translate3d(1px, -1px, 0) rotate(0.25deg);
+  }
+  50% {
+    transform: translate3d(-1px, 0, 0) rotate(-0.2deg);
+  }
+  60% {
+    transform: translate3d(2px, 1px, 0) rotate(0.2deg);
+  }
+  70% {
+    transform: translate3d(-2px, -1px, 0) rotate(-0.25deg);
+  }
+  80% {
+    transform: translate3d(1px, 1px, 0) rotate(0.25deg);
+  }
+  90% {
+    transform: translate3d(-1px, 0, 0) rotate(-0.15deg);
+  }
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+.app-jump-in {
+  animation: app-jump-in 650ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.app-glow-pulse {
+  animation: app-glow-pulse 900ms ease-out both;
+}
+
+.app-vibrate {
+  will-change: transform;
+  transform-origin: center;
+  animation: app-vibrate 900ms ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-jump-in,
+  .app-glow-pulse,
+  .app-vibrate {
+    animation: none;
+  }
 }

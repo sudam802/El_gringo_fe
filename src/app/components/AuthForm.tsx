@@ -349,7 +349,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       required
-                      className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                      className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-blue-200 focus:ring"
                     />
                   </div>
                   <div>
@@ -360,7 +360,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
-                      className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                      className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-blue-200 focus:ring"
                     />
                   </div>
                 </div>
@@ -372,7 +372,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       type="button"
                       onClick={useMyLocation}
                       disabled={geoLocating}
-                      className="text-xs text-emerald-700 hover:underline disabled:opacity-60"
+                      className="text-xs text-blue-700 hover:underline disabled:opacity-60"
                     >
                       {geoLocating ? "Locating..." : "Use my location"}
                     </button>
@@ -391,7 +391,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                       onFocus={() => setGeoOpen(true)}
                       onBlur={() => setTimeout(() => setGeoOpen(false), 150)}
                       required
-                      className="w-full rounded-lg border px-3 py-2 pr-10 outline-none ring-emerald-200 focus:ring"
+                      className="w-full rounded-lg border px-3 py-2 pr-10 outline-none ring-blue-200 focus:ring"
                     />
                     <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
                       ⌕
@@ -457,7 +457,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                         className={[
                           "rounded-full border px-3 py-1 text-sm transition",
                           active
-                            ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                            ? "border-blue-600 bg-blue-50 text-blue-700"
                             : "border-gray-200 bg-white text-gray-800 hover:bg-gray-50",
                         ].join(" ")}
                         aria-pressed={active}
@@ -482,7 +482,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                         className={[
                           "rounded-xl border px-3 py-3 text-left text-sm transition",
                           active
-                            ? "border-emerald-600 bg-emerald-50"
+                            ? "border-blue-600 bg-blue-50"
                             : "border-gray-200 bg-white hover:bg-gray-50",
                         ].join(" ")}
                         aria-pressed={active}
@@ -511,7 +511,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-blue-200 focus:ring"
               />
             </div>
             <div>
@@ -522,7 +522,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                className="mt-1 w-full rounded-lg border px-3 py-2 outline-none ring-blue-200 focus:ring"
               />
             </div>
           </div>
@@ -530,7 +530,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <button
             type="submit"
             disabled={submitting}
-            className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-2.5 text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+            className="mt-5 w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-2.5 text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
           >
             {submitting ? "Please wait..." : mode === "login" ? "Login" : "Create account"}
           </button>

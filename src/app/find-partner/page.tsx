@@ -252,7 +252,7 @@ export default function FindPartner() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
+    <div className="min-h-full">
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left sidebar */}
@@ -360,7 +360,7 @@ export default function FindPartner() {
                             <button
                               onClick={() => addFriend(id)}
                               disabled={!id || addingFriendId === id}
-                              className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
                             >
                               {addingFriendId === id ? "Adding…" : "Add friend"}
                             </button>
@@ -429,7 +429,7 @@ export default function FindPartner() {
                               <button
                                 onClick={() => acceptFriend(id)}
                                 disabled={!id || acceptingFriendId === id}
-                                className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
                               >
                                 {acceptingFriendId === id ? "Accepting…" : "Accept"}
                               </button>

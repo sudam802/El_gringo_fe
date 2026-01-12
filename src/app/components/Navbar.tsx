@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader, clearAuthToken } from "@/lib/authToken";
 
@@ -24,8 +24,10 @@ function userIdFromBackendUser(user: BackendUser): string | null {
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<null | BackendUser>(null);
   const [avatarVersion, setAvatarVersion] = useState<number>(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -114,75 +116,207 @@ export default function Navbar() {
     (user && (coerceString(user.username) ?? coerceString(user.fullName) ?? coerceString(user.email))) ||
     "Account";
 
-  return (
-    <nav className="flex justify-between items-center px-8 py-4 shadow-md bg-white">
-      <h1
-        className="text-2xl font-bold text-emerald-600 cursor-pointer"
-        onClick={() => router.push(user ? "/feed" : "/")}
-      >
-        🏅 Sports Partner
-      </h1>
+  const items = user
+    ? [
+        { label: "Home", href: "/feed", active: pathname?.startsWith("/feed") },
+        { label: "Dashboard", href: "/find-partner?stay=1", active: pathname?.startsWith("/find-partner") },
+        { label: "Messages", href: "/chat", active: pathname?.startsWith("/chat") },
+        { label: "Notifications", href: "/events", active: pathname?.startsWith("/events") },
+      ]
+    : [
+        { label: "Home", href: "/", active: pathname === "/" },
+        { label: "Messages", href: "/chat", active: pathname?.startsWith("/chat") },
+        { label: "Events", href: "/events", active: pathname?.startsWith("/events") },
+      ];
 
-      <div className="space-x-4">
-        {user ? (
-          <>
+  const go = (href: string) => {
+    setMobileOpen(false);
+    router.push(href);
+  };
+
+  return (
+    <nav className="sticky top-0 z-50 py-3">
+      <div className="app-container">
+        <div className="rounded-3xl bg-white/70 backdrop-blur ring-1 ring-slate-200/70 shadow-sm">
+          <div className="px-3 sm:px-4 py-3 flex items-center gap-3">
             <button
               type="button"
-              onClick={() => router.push("/feed")}
-              className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
+              onClick={() => go(user ? "/feed" : "/")}
+              className="inline-flex items-center gap-3"
+              aria-label="Go to home"
             >
-              Feed
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-200">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                  <path
+                    d="M7 12.5 12 7.5l5 5v7.2c0 .7-.6 1.3-1.3 1.3H8.3c-.7 0-1.3-.6-1.3-1.3v-7.2Z"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M5 10.2 12 4l7 6.2"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+              <span className="hidden sm:block text-base font-semibold text-slate-900">
+                ElGringo
+              </span>
             </button>
-            <button
-              type="button"
-              onClick={() => router.push("/chat")}
-              className="px-4 py-2 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100"
-            >
-              Chat
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/find-partner?stay=1")}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Find Partner
-            </button>
-            <button
-              type="button"
-              onClick={() => router.push("/profile")}
-              className="inline-flex items-center gap-2 align-middle"
-              title="Profile"
-            >
-              {userId ? (
-                <UserAvatar userId={userId} name={displayName} version={avatarVersion} />
+
+            <div className="flex-1 flex items-center justify-center">
+              <div className="hidden md:flex items-center gap-2">
+                {items.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => go(item.href)}
+                    className={[
+                      "relative px-3 py-2 text-sm font-semibold transition",
+                      item.active ? "text-slate-900" : "text-slate-500 hover:text-slate-900",
+                      item.active
+                        ? "after:absolute after:left-3 after:right-3 after:-bottom-1 after:h-0.5 after:rounded-full after:bg-blue-600"
+                        : "",
+                    ].join(" ")}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 ring-1 ring-slate-200 hover:bg-white"
+                onClick={() => setMobileOpen((v) => !v)}
+                aria-expanded={mobileOpen}
+                aria-label="Open menu"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                  <path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              </button>
+
+              {user ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => go("/events")}
+                    className="hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white/70 ring-1 ring-slate-200 hover:bg-white"
+                    aria-label="Notifications"
+                    title="Notifications"
+                  >
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                      <path
+                        d="M12 22a2.4 2.4 0 0 0 2.4-2.4H9.6A2.4 2.4 0 0 0 12 22Z"
+                        fill="currentColor"
+                        opacity="0.25"
+                      />
+                      <path
+                        d="M18 16.2H6c.9-1 1.5-2.4 1.5-4.1V10a4.5 4.5 0 1 1 9 0v2.1c0 1.7.6 3.1 1.5 4.1Z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => go("/profile")}
+                    className="inline-flex items-center gap-2 rounded-2xl px-2 py-1.5 hover:bg-white/60"
+                    title="Profile"
+                  >
+                    {userId ? (
+                      <UserAvatar userId={userId} name={displayName} version={avatarVersion} />
+                    ) : (
+                      <span className="inline-block h-9 w-9 rounded-full bg-slate-200" />
+                    )}
+                    <span className="hidden lg:block text-sm font-semibold text-slate-700 max-w-40 truncate">
+                      {displayName}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="hidden sm:inline-flex rounded-2xl bg-white/70 px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-white"
+                  >
+                    Logout
+                  </button>
+                </>
               ) : (
-                <span className="inline-block w-8 h-8 rounded-full bg-gray-200" />
+                <div className="hidden sm:flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => go("/auth/login")}
+                    className="btn-soft"
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => go("/auth/signup")}
+                    className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-blue-200 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    Sign Up
+                  </button>
+                </div>
               )}
-              <span className="text-gray-700 font-medium">Hi, {displayName}</span>
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={() => router.push("/auth/login")}
-              className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
-            >
-              Login
-            </button>
-            <button
-              onClick={() => router.push("/auth/signup")}
-              className="px-4 py-2 rounded-lg border border-emerald-600 text-emerald-700 hover:bg-emerald-50"
-            >
-              Sign Up
-            </button>
-          </>
-        )}
+            </div>
+          </div>
+
+          {mobileOpen ? (
+            <div className="md:hidden border-t border-slate-200/70 px-3 py-3">
+              <div className="grid gap-1">
+                {items.map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => go(item.href)}
+                    className={[
+                      "w-full rounded-2xl px-4 py-2 text-left text-sm font-semibold transition",
+                      item.active ? "bg-blue-50 text-slate-900 ring-1 ring-blue-200" : "text-slate-700 hover:bg-white/70",
+                    ].join(" ")}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+
+                {user ? (
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-1 w-full rounded-2xl px-4 py-2 text-left text-sm font-semibold text-red-700 ring-1 ring-red-200 hover:bg-red-50"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => go("/auth/login")}
+                      className="mt-1 w-full rounded-2xl px-4 py-2 text-left text-sm font-semibold text-slate-900 ring-1 ring-slate-200 hover:bg-white/70"
+                    >
+                      Login
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => go("/auth/signup")}
+                      className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-left text-sm font-semibold text-white shadow-sm shadow-blue-200 hover:from-blue-700 hover:to-indigo-700"
+                    >
+                      Sign Up
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </nav>
   );

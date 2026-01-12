@@ -59,6 +59,8 @@ export default function EventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [justCreatedEventId, setJustCreatedEventId] = useState<string | null>(null);
+  const [vibrateIndex, setVibrateIndex] = useState<number>(0);
 
   // Create form
   const [title, setTitle] = useState("");
@@ -97,6 +99,34 @@ export default function EventsPage() {
     const data = parsed.body as { events?: EventItem[] };
     setEvents(Array.isArray(data.events) ? data.events : []);
   }, [base, router]);
+
+  useEffect(() => {
+    if (!justCreatedEventId) return;
+    const el = document.querySelector<HTMLElement>(`[data-event-id="${CSS.escape(justCreatedEventId)}"]`);
+    if (el) {
+      try {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+      } catch {
+        el.scrollIntoView();
+      }
+    }
+    const t = window.setTimeout(() => setJustCreatedEventId(null), 1400);
+    return () => window.clearTimeout(t);
+  }, [justCreatedEventId]);
+
+  useEffect(() => {
+    if (events.length <= 1) {
+      setVibrateIndex(0);
+      return;
+    }
+
+    setVibrateIndex(0);
+    const t = window.setInterval(() => {
+      setVibrateIndex((prev) => (events.length ? (prev + 1) % events.length : 0));
+    }, 2000);
+
+    return () => window.clearInterval(t);
+  }, [events.length]);
 
   useEffect(() => {
     let mounted = true;
@@ -196,6 +226,13 @@ export default function EventsPage() {
       const parsed = await readJsonOrText(res);
       if (!res.ok) throw new Error(messageFromBody(parsed) || "Failed to create event");
 
+      let createdId: string | null = null;
+      if (parsed.isJson && parsed.body && typeof parsed.body === "object") {
+        const body = parsed.body as { event?: { id?: unknown } };
+        const raw = body?.event?.id;
+        if (typeof raw === "string" && raw.trim()) createdId = raw;
+      }
+
       setTitle("");
       setSport("");
       setStartsAt("");
@@ -207,6 +244,7 @@ export default function EventsPage() {
       setGeoResults([]);
       setGeoOpen(false);
       await refresh();
+      if (createdId) setJustCreatedEventId(createdId);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to create event");
     } finally {
@@ -252,7 +290,7 @@ export default function EventsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-teal-50 to-white">
+    <div className="min-h-full">
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -286,7 +324,7 @@ export default function EventsPage() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Practice session"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-blue-200 focus:ring"
                 />
               </div>
               <div>
@@ -295,7 +333,7 @@ export default function EventsPage() {
                   value={sport}
                   onChange={(e) => setSport(e.target.value)}
                   placeholder="Badminton"
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-blue-200 focus:ring"
                 />
               </div>
             </div>
@@ -307,7 +345,7 @@ export default function EventsPage() {
                   type="datetime-local"
                   value={startsAt}
                   onChange={(e) => setStartsAt(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-blue-200 focus:ring"
                 />
               </div>
               <div>
@@ -318,7 +356,7 @@ export default function EventsPage() {
                   max={100}
                   value={maxParticipants}
                   onChange={(e) => setMaxParticipants(Number(e.target.value))}
-                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-emerald-200 focus:ring"
+                  className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-blue-200 focus:ring"
                 />
               </div>
             </div>
@@ -336,7 +374,7 @@ export default function EventsPage() {
                   onFocus={() => setGeoOpen(true)}
                   onBlur={() => setTimeout(() => setGeoOpen(false), 150)}
                   placeholder="Search a place (optional)"
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2 pr-10 outline-none ring-emerald-200 focus:ring"
+                  className="w-full rounded-lg border border-slate-200 px-3 py-2 pr-10 outline-none ring-blue-200 focus:ring"
                 />
                 <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
                   ⌕
@@ -381,7 +419,7 @@ export default function EventsPage() {
                   className={[
                     "rounded-xl border px-3 py-2 text-sm transition",
                     visibility === "public"
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
                       : "border-slate-200 bg-white text-gray-800 hover:bg-slate-50",
                   ].join(" ")}
                 >
@@ -393,7 +431,7 @@ export default function EventsPage() {
                   className={[
                     "rounded-xl border px-3 py-2 text-sm transition",
                     visibility === "friends"
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                      ? "border-blue-600 bg-blue-50 text-blue-700"
                       : "border-slate-200 bg-white text-gray-800 hover:bg-slate-50",
                   ].join(" ")}
                 >
@@ -408,7 +446,7 @@ export default function EventsPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Optional details (time, court, rules, etc.)"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-emerald-200 focus:ring min-h-[90px]"
+                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 outline-none ring-blue-200 focus:ring min-h-[90px]"
               />
             </div>
 
@@ -417,7 +455,7 @@ export default function EventsPage() {
                 type="button"
                 onClick={createEvent}
                 disabled={!canCreate}
-                className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
               >
                 Create event
               </button>
@@ -435,11 +473,25 @@ export default function EventsPage() {
             <div className="p-4 text-sm text-gray-600">No events yet.</div>
           ) : (
             <div className="divide-y divide-slate-100">
-              {events.map((ev) => {
+              {events.map((ev, idx) => {
                 const disabled = joiningRef.current === ev.id || (ev.owner && ev.joined);
+                const justCreated = ev.id === justCreatedEventId;
+                const shouldVibrate = !justCreated && idx === vibrateIndex;
                 return (
-                  <div key={ev.id} className="p-4 hover:bg-white/60 transition">
-                    <div className="flex items-start justify-between gap-4">
+                  <div
+                    key={ev.id}
+                    data-event-id={ev.id}
+                    className={[
+                      "p-4 transition",
+                      justCreated
+                        ? "app-jump-in app-glow-pulse bg-blue-50/40 ring-1 ring-blue-200/70"
+                        : "hover:bg-white/60",
+                    ].join(" ")}
+                  >
+                    <div
+                      className={shouldVibrate ? "app-vibrate" : ""}
+                    >
+                      <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
                         <div className="font-semibold text-gray-900">{ev.title}</div>
                         <div className="mt-0.5 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
@@ -469,7 +521,7 @@ export default function EventsPage() {
                               ? "bg-slate-100 text-slate-900"
                               : ev.joined
                                 ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
-                                : "bg-gradient-to-r from-emerald-600 to-teal-600 text-white hover:from-emerald-700 hover:to-teal-700",
+                                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700",
                           ].join(" ")}
                         >
                           {joiningRef.current === ev.id
@@ -485,6 +537,7 @@ export default function EventsPage() {
                             by {ev.createdBy.username}
                           </div>
                         ) : null}
+                      </div>
                       </div>
                     </div>
                   </div>

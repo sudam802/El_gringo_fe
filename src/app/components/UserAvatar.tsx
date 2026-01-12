@@ -45,7 +45,7 @@ export default function UserAvatar({
   if (failed) {
     return (
       <div
-        className={`inline-flex items-center justify-center rounded-full bg-emerald-600 text-white font-semibold ${className ?? ""}`}
+        className={`inline-flex items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-semibold ${className ?? ""}`}
         style={{ width: size, height: size, fontSize: Math.max(12, Math.floor(size / 2.4)) }}
         aria-label={name}
         title={name}

@@ -29,6 +29,21 @@ type FriendRequest = {
   createdAt: string;
 };
 
+type EventItem = {
+  id: string;
+  title: string;
+  description?: string;
+  sport?: string;
+  startsAt: string;
+  locationName?: string;
+  visibility: "public" | "friends";
+  maxParticipants: number;
+  participantsCount: number;
+  joined: boolean;
+  owner: boolean;
+  createdBy?: { id: string; username?: string; email?: string };
+};
+
 function toIdString(id: unknown): string {
   return typeof id === "string" ? id : String(id ?? "");
 }
@@ -41,6 +56,18 @@ function formatTime(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
   return d.toLocaleString();
+}
+
+function formatWhenShort(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function resolveMediaUrl(base: string | undefined, url: string): string {
@@ -83,6 +110,7 @@ export default function FeedPage() {
   const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
 
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +125,8 @@ export default function FeedPage() {
   const [posting, setPosting] = useState(false);
   const [addingFriendId, setAddingFriendId] = useState<string | null>(null);
   const [acceptingFriendId, setAcceptingFriendId] = useState<string | null>(null);
+  const [joiningEventId, setJoiningEventId] = useState<string | null>(null);
+  const [vibrateEventIndex, setVibrateEventIndex] = useState<number>(0);
 
   const fetchedRef = useRef(false);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
@@ -110,13 +140,19 @@ export default function FeedPage() {
 
     setError(null);
     const headers = authHeader();
-    const [feedRes, suggestionsRes, requestsRes] = await Promise.all([
+    const [feedRes, eventsRes, suggestionsRes, requestsRes] = await Promise.all([
       fetch(`${base}/api/feed`, { credentials: "include", headers }),
+      fetch(`${base}/api/events`, { credentials: "include", headers }),
       fetch(`${base}/api/friends/suggestions?limit=6`, { credentials: "include", headers }),
       fetch(`${base}/api/friends/requests`, { credentials: "include", headers }),
     ]);
 
-    if (feedRes.status === 401 || suggestionsRes.status === 401 || requestsRes.status === 401) {
+    if (
+      feedRes.status === 401 ||
+      eventsRes.status === 401 ||
+      suggestionsRes.status === 401 ||
+      requestsRes.status === 401
+    ) {
       router.push("/auth/login");
       return;
     }
@@ -130,6 +166,16 @@ export default function FeedPage() {
     } else {
       const parsed = await readJsonOrText(feedRes);
       setError(messageFromBody(parsed) ?? "Failed to load feed");
+    }
+
+    if (eventsRes.ok) {
+      const parsed = await readJsonOrText(eventsRes);
+      if (parsed.isJson) {
+        const data = parsed.body as { events?: EventItem[] };
+        setEvents(Array.isArray(data?.events) ? data.events : []);
+      }
+    } else {
+      setEvents([]);
     }
 
     if (suggestionsRes.ok) {
@@ -148,6 +194,54 @@ export default function FeedPage() {
       }
     }
   }, [base, router]);
+
+  const joinOrLeaveEvent = useCallback(
+    async (ev: EventItem) => {
+      if (!base) return;
+      if (!ev?.id) return;
+      if (joiningEventId) return;
+      setJoiningEventId(ev.id);
+      setError(null);
+      try {
+        const action = ev.joined ? "leave" : "join";
+        const res = await fetch(`${base}/api/events/${encodeURIComponent(ev.id)}/${action}`, {
+          method: "POST",
+          credentials: "include",
+          headers: authHeader(),
+        });
+        if (res.status === 401) {
+          router.push("/auth/login");
+          return;
+        }
+        const parsed = await readJsonOrText(res);
+        if (!res.ok) throw new Error(messageFromBody(parsed) ?? "Event action failed");
+        await refresh();
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Event action failed");
+      } finally {
+        setJoiningEventId(null);
+      }
+    },
+    [base, joiningEventId, refresh, router]
+  );
+
+  const upcomingEvents = useMemo(() => events.slice(0, 3), [events]);
+
+  useEffect(() => {
+    if (upcomingEvents.length <= 1) {
+      setVibrateEventIndex(0);
+      return;
+    }
+
+    setVibrateEventIndex(0);
+    const t = window.setInterval(() => {
+      setVibrateEventIndex((prev) =>
+        upcomingEvents.length ? (prev + 1) % upcomingEvents.length : 0
+      );
+    }, 2000);
+
+    return () => window.clearInterval(t);
+  }, [upcomingEvents.length]);
 
   useEffect(() => {
     if (fetchedRef.current) return;
@@ -314,7 +408,7 @@ export default function FeedPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-slate-50">
+    <div className="min-h-full">
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -326,7 +420,7 @@ export default function FeedPage() {
           <button
             type="button"
             onClick={() => router.push("/find-partner?stay=1")}
-            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
+            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 hover:bg-blue-50"
           >
             Find Partner
           </button>
@@ -349,7 +443,7 @@ export default function FeedPage() {
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   placeholder="What are you working on today?"
-                  className="w-full min-h-24 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-emerald-200 focus:ring bg-white"
+                  className="w-full min-h-24 rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring bg-white"
                 />
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto]">
@@ -377,7 +471,7 @@ export default function FeedPage() {
                           setMediaFile(f);
                           if (f) setMediaUrl("");
                         }}
-                        className="block w-full sm:w-auto text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-3 file:py-2 file:text-white hover:file:bg-emerald-700"
+                        className="block w-full sm:w-auto text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-3 file:py-2 file:text-white hover:file:bg-blue-700"
                       />
                     </div>
 
@@ -428,7 +522,7 @@ export default function FeedPage() {
                     value={mediaUrl}
                     onChange={(e) => setMediaUrl(e.target.value)}
                     placeholder="Optional media URL (image or video)"
-                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-emerald-200 focus:ring bg-white"
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring bg-white"
                     disabled={Boolean(mediaFile)}
                   />
                   <select
@@ -462,7 +556,7 @@ export default function FeedPage() {
                     type="button"
                     onClick={submitPost}
                     disabled={!canPost || posting}
-                    className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                    className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
                   >
                     {posting ? "Posting…" : "Post"}
                   </button>
@@ -541,11 +635,76 @@ export default function FeedPage() {
             <section className="rounded-2xl bg-white/80 ring-1 ring-slate-200/70 shadow-sm overflow-hidden backdrop-blur">
               <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-white to-slate-50">
                 <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-gray-900">Upcoming events</div>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/events")}
+                    className="text-xs text-blue-700 hover:underline"
+                  >
+                    View all
+                  </button>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                {upcomingEvents.length === 0 ? (
+                  <div className="text-sm text-gray-600">No upcoming events.</div>
+                ) : (
+                  upcomingEvents.map((ev, idx) => {
+                    const spotsLeft = Math.max(0, (ev.maxParticipants ?? 0) - (ev.participantsCount ?? 0));
+                    const disabled = joiningEventId === ev.id || (ev.owner && ev.joined);
+                    return (
+                      <div
+                        key={ev.id}
+                        className={[
+                          "flex items-start justify-between gap-3",
+                          idx === vibrateEventIndex ? "app-vibrate" : "",
+                        ].join(" ")}
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold text-gray-900 truncate">{ev.title}</div>
+                          <div className="mt-0.5 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
+                            <span>🕒 {formatWhenShort(ev.startsAt)}</span>
+                            {ev.sport ? <span>🏅 {ev.sport}</span> : null}
+                            {ev.locationName ? <span className="truncate">📍 {ev.locationName}</span> : null}
+                            <span>👥 {spotsLeft} spots left</span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => joinOrLeaveEvent(ev)}
+                          disabled={disabled}
+                          className={[
+                            "rounded-xl px-3 py-1.5 text-xs shadow-sm disabled:opacity-60",
+                            ev.owner && ev.joined
+                              ? "bg-slate-100 text-slate-900"
+                              : ev.joined
+                                ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700",
+                          ].join(" ")}
+                        >
+                          {joiningEventId === ev.id
+                            ? "Please wait…"
+                            : ev.owner && ev.joined
+                              ? "Creator"
+                              : ev.joined
+                                ? "Leave"
+                                : "Join"}
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-2xl bg-white/80 ring-1 ring-slate-200/70 shadow-sm overflow-hidden backdrop-blur">
+              <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-white to-slate-50">
+                <div className="flex items-center justify-between">
                   <div className="text-sm font-semibold text-gray-900">People you may know</div>
                   <button
                     type="button"
                     onClick={() => refresh().catch(() => {})}
-                    className="text-xs text-emerald-700 hover:underline"
+                    className="text-xs text-blue-700 hover:underline"
                   >
                     Refresh
                   </button>
@@ -571,7 +730,7 @@ export default function FeedPage() {
                           type="button"
                           onClick={() => addFriend(id)}
                           disabled={!id || addingFriendId === id}
-                          className="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs text-white hover:bg-emerald-700 disabled:opacity-60"
+                          className="rounded-xl bg-blue-600 px-3 py-1.5 text-xs text-white hover:bg-blue-700 disabled:opacity-60"
                         >
                           {addingFriendId === id ? "Adding…" : "Add"}
                         </button>
@@ -604,7 +763,7 @@ export default function FeedPage() {
                           type="button"
                           onClick={() => acceptFriend(id)}
                           disabled={!id || acceptingFriendId === id}
-                          className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-3 py-1.5 text-xs text-white shadow-sm hover:from-emerald-700 hover:to-teal-700 disabled:opacity-60"
+                          className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-1.5 text-xs text-white shadow-sm hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
                         >
                           {acceptingFriendId === id ? "Accepting…" : "Accept"}
                         </button>

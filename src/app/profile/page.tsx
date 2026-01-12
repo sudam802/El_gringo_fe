@@ -125,7 +125,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
         <button
@@ -137,7 +137,7 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      <div className="mt-6 rounded-lg border bg-white p-6">
+      <div className="mt-6 app-card p-6">
         <div className="flex items-center gap-4">
           {userId ? (
             <UserAvatar userId={userId} name={name} size={96} version={avatarVersion} />
@@ -176,7 +176,7 @@ export default function ProfilePage() {
             type="button"
             disabled={saving}
             onClick={handleUpload}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60"
+            className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
           >
             {saving ? "Uploading..." : "Update picture"}
           </button>

@@ -68,7 +68,7 @@ export default function Chat() {
   }, [refresh]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-slate-50">
+    <div className="min-h-full">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -78,7 +78,7 @@ export default function Chat() {
           <button
             type="button"
             onClick={() => refresh().catch(() => {})}
-            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-50"
+            className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-blue-700 ring-1 ring-blue-200 hover:bg-blue-50"
             disabled={loading}
           >
             Refresh
@@ -108,7 +108,7 @@ export default function Chat() {
                 <button
                   type="button"
                   onClick={() => router.push("/find-partner?stay=1")}
-                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+                  className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
                 >
                   Find friends
                 </button>

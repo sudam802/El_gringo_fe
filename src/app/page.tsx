@@ -38,15 +38,15 @@ export default function HomePage() {
 
   if (checkingAuth) {
     return (
-      <main className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-full flex items-center justify-center text-gray-500">
         Loading…
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-full">
       <LandingHero />
-    </main>
+    </div>
   );
 }
