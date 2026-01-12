@@ -21,6 +21,13 @@ export async function GET(req: Request, context: { params: Promise<{ userId: str
       ? "public, max-age=31536000, immutable"
       : "public, max-age=0, must-revalidate";
 
+    if (meta.url) {
+      const target = new URL(meta.url);
+      const v = url.searchParams.get("v");
+      if (v) target.searchParams.set("v", v);
+      return NextResponse.redirect(target, { status: 307, headers: { "Cache-Control": cacheControl } });
+    }
+
     const bytes = await readAvatarBytes(meta);
     const body = new Uint8Array(bytes);
     return new NextResponse(body, {
