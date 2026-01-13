@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeader } from "@/lib/authToken";
+import MapPreview from "@/components/MapPreview";
+import LivePlayersMap from "@/components/LivePlayersMap";
 
 type GeoCoords = { lat: number; lng: number };
 type GeoResult = { displayName: string; lat: number; lng: number };
@@ -61,6 +63,7 @@ export default function EventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [justCreatedEventId, setJustCreatedEventId] = useState<string | null>(null);
   const [vibrateIndex, setVibrateIndex] = useState<number>(0);
+  const [expandedEventId, setExpandedEventId] = useState<string | null>(null);
 
   // Create form
   const [title, setTitle] = useState("");
@@ -244,7 +247,10 @@ export default function EventsPage() {
       setGeoResults([]);
       setGeoOpen(false);
       await refresh();
-      if (createdId) setJustCreatedEventId(createdId);
+      if (createdId) {
+        setJustCreatedEventId(createdId);
+        setExpandedEventId(createdId);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to create event");
     } finally {
@@ -477,6 +483,12 @@ export default function EventsPage() {
                 const disabled = joiningRef.current === ev.id || (ev.owner && ev.joined);
                 const justCreated = ev.id === justCreatedEventId;
                 const shouldVibrate = !justCreated && idx === vibrateIndex;
+                const coords = ev.locationCoords;
+                const hasCoords =
+                  Boolean(coords) &&
+                  Number.isFinite(coords?.lat) &&
+                  Number.isFinite(coords?.lng);
+                const expanded = expandedEventId === ev.id;
                 return (
                   <div
                     key={ev.id}
@@ -485,68 +497,161 @@ export default function EventsPage() {
                       "p-4 transition",
                       justCreated
                         ? "app-jump-in app-glow-pulse bg-blue-50/40 ring-1 ring-blue-200/70"
-                        : "hover:bg-white/60",
+                        : expanded
+                          ? "bg-white/60 ring-1 ring-slate-200/70"
+                          : "hover:bg-white/60",
                     ].join(" ")}
                   >
-                    <div
-                      className={shouldVibrate ? "app-vibrate" : ""}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-gray-900">{ev.title}</div>
-                        <div className="mt-0.5 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
-                          {ev.sport ? <span>🏅 {ev.sport}</span> : null}
-                          <span>🕒 {formatWhen(ev.startsAt)}</span>
-                          {ev.locationName ? <span>📍 {ev.locationName}</span> : null}
-                          <span>
-                            👥 {ev.participantsCount}/{ev.maxParticipants}
-                          </span>
-                          <span className="capitalize">🔒 {ev.visibility}</span>
+                    <div className={shouldVibrate ? "app-vibrate" : ""}>
+                      <div
+                        className="flex items-start justify-between gap-4 cursor-pointer select-none"
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={expanded}
+                        onClick={() => setExpandedEventId(expanded ? null : ev.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            setExpandedEventId(expanded ? null : ev.id);
+                          }
+                        }}
+                      >
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="font-semibold text-gray-900">{ev.title}</div>
+                          <div className="mt-0.5 text-xs text-gray-600 flex flex-wrap gap-x-2 gap-y-1">
+                            {ev.sport ? <span>🏅 {ev.sport}</span> : null}
+                            <span>🕒 {formatWhen(ev.startsAt)}</span>
+                            {ev.locationName ? <span>📍 {ev.locationName}</span> : null}
+                            <span>
+                              👥 {ev.participantsCount}/{ev.maxParticipants}
+                            </span>
+                            <span className="capitalize">🔒 {ev.visibility}</span>
+                          </div>
+                          {ev.description ? (
+                            <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
+                              {ev.description}
+                            </div>
+                          ) : null}
+                          <div className="mt-2 text-xs text-blue-700">
+                            {expanded ? "Hide details" : "View details"}
+                          </div>
                         </div>
-                        {ev.description ? (
-                          <div className="mt-2 text-sm text-gray-700 whitespace-pre-wrap">
-                            {ev.description}
-                          </div>
-                        ) : null}
-                      </div>
 
-                      <div className="flex-shrink-0 flex flex-col items-end gap-2">
-                        <button
-                          type="button"
-                          onClick={() => joinOrLeave(ev)}
-                          disabled={disabled}
-                          className={[
-                            "rounded-xl px-4 py-2 text-sm shadow-sm disabled:opacity-60",
-                            ev.owner
-                              ? "bg-slate-100 text-slate-900"
-                              : ev.joined
-                                ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
-                                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700",
-                          ].join(" ")}
-                        >
-                          {joiningRef.current === ev.id
-                            ? "Please wait…"
-                            : ev.owner
-                              ? "Creator"
-                              : ev.joined
-                                ? "Leave"
-                                : "Join"}
-                        </button>
-                        {ev.createdBy?.username ? (
-                          <div className="text-xs text-gray-500">
-                            by {ev.createdBy.username}
-                          </div>
-                        ) : null}
-                      </div>
+                        <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              joinOrLeave(ev);
+                            }}
+                            disabled={disabled}
+                            className={[
+                              "rounded-xl px-4 py-2 text-sm shadow-sm disabled:opacity-60",
+                              ev.owner
+                                ? "bg-slate-100 text-slate-900"
+                                : ev.joined
+                                  ? "bg-slate-100 text-slate-900 hover:bg-slate-200"
+                                  : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700",
+                            ].join(" ")}
+                          >
+                            {joiningRef.current === ev.id
+                              ? "Please wait…"
+                              : ev.owner
+                                ? "Creator"
+                                : ev.joined
+                                  ? "Leave"
+                                  : "Join"}
+                          </button>
+                          {ev.createdBy?.username ? (
+                            <div className="text-xs text-gray-500">by {ev.createdBy.username}</div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
+
+                    {expanded ? (
+                      <div className="mt-4 app-jump-in">
+                        <div className="rounded-2xl bg-white/70 ring-1 ring-slate-200/70 p-4">
+                          <div className="text-sm font-semibold text-slate-900">Event details</div>
+                          <div className="mt-2 grid gap-1 text-sm text-slate-700">
+                            <div>
+                              <span className="text-slate-500">When:</span> {formatWhen(ev.startsAt)}
+                            </div>
+                            {ev.sport ? (
+                              <div>
+                                <span className="text-slate-500">Sport:</span> {ev.sport}
+                              </div>
+                            ) : null}
+                            {ev.locationName ? (
+                              <div>
+                                <span className="text-slate-500">Location:</span> {ev.locationName}
+                              </div>
+                            ) : null}
+                            <div>
+                              <span className="text-slate-500">Visibility:</span> {ev.visibility}
+                            </div>
+                            <div>
+                              <span className="text-slate-500">Participants:</span>{" "}
+                              {ev.participantsCount}/{ev.maxParticipants}
+                            </div>
+                          </div>
+
+                          {hasCoords ? (
+                            <div className="mt-4">
+                              <MapPreview
+                                lat={coords!.lat}
+                                lng={coords!.lng}
+                                label={ev.locationName?.trim() || ev.title}
+                                height={260}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-4 text-sm text-slate-600">
+                              No map available for this event (missing coordinates).
+                            </div>
+                          )}
+
+                          {hasCoords ? (
+                            ev.joined ? (
+                              <div className="mt-4">
+                                <LivePlayersMap
+                                  baseUrl={base}
+                                  eventId={ev.id}
+                                  eventCenter={coords!}
+                                  eventLabel={ev.locationName?.trim() || ev.title}
+                                  height={320}
+                                />
+                              </div>
+                            ) : (
+                              <div className="mt-4 text-sm text-slate-600">
+                                Join this event to share your live location and see other arrived players.
+                              </div>
+                            )
+                          ) : null}
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
+                  </div>
+                )}
+              </div>
+              {locationCoords ? (
+                <div className="mt-3">
+                  <MapPreview
+                    lat={locationCoords.lat}
+                    lng={locationCoords.lng}
+                    label={locationName.trim() || "Event location"}
+                    className="app-jump-in"
+                  />
+                </div>
+              ) : locationName.trim() ? (
+                <div className="mt-2 text-xs text-slate-600">
+                  Select a location suggestion to preview it on the map.
+                </div>
+              ) : null}
             </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }

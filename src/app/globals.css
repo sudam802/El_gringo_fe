@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "stream-chat-react/dist/css/v2/index.css";
+@import "leaflet/dist/leaflet.css";
 
 :root {
   --background: #f6f9ff;
@@ -134,10 +135,99 @@ body {
   animation: app-vibrate 900ms ease-in-out infinite;
 }
 
+@keyframes app-live-blink {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  55% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.app-live-marker {
+  position: relative;
+  width: 22px;
+  height: 22px;
+}
+
+.app-live-marker__pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 46px;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  background: rgba(59, 130, 246, 0.18);
+  animation: app-glow-pulse 1000ms ease-out infinite;
+}
+
+.app-live-marker__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  transform: translate(-50%, -50%);
+  background: #2563eb;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  animation: app-live-blink 1100ms ease-in-out infinite;
+}
+
+.app-live-marker--me .app-live-marker__pulse {
+  background: rgba(34, 197, 94, 0.18);
+}
+
+.app-live-marker--me .app-live-marker__dot {
+  background: #16a34a;
+}
+
+.app-live-marker__label {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translate(-50%, 8px);
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.9);
+  color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 20px rgba(2, 6, 23, 0.2);
+}
+
+.app-event-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+}
+
+.app-event-marker__dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #0f172a;
+  border: 2px solid rgba(255, 255, 255, 0.95);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .app-jump-in,
   .app-glow-pulse,
-  .app-vibrate {
+  .app-vibrate,
+  .app-live-marker__pulse,
+  .app-live-marker__dot {
     animation: none;
   }
 }
