@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type FeedMedia = { type: "image" | "video"; url: string };
 type FeedPost = {
@@ -161,10 +162,7 @@ function FeedCard({
 
 export default function DashboardPage() {
   const router = useRouter();
-  const base = useMemo(
-    () => String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, ""),
-    []
-  );
+  const base = useMemo(() => getBackendBaseUrl(), []);
 
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -468,4 +466,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

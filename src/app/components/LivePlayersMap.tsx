@@ -18,6 +18,15 @@ type LiveLocation = {
   isMe: boolean;
 };
 
+type DeviceFix = {
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  at: number;
+};
+
+const MAX_ACCEPTABLE_ACCURACY_M = 1500;
+
 type Props = {
   baseUrl: string;
   eventId: string;
@@ -71,8 +80,10 @@ export default function LivePlayersMap({
 
   const [sharing, setSharing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [gpsWarning, setGpsWarning] = useState<string | null>(null);
   const [locations, setLocations] = useState<LiveLocation[]>([]);
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
+  const [deviceFix, setDeviceFix] = useState<DeviceFix | null>(null);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
@@ -192,6 +203,7 @@ export default function LivePlayersMap({
     }
     watchIdRef.current = null;
     setSharing(false);
+    setGpsWarning(null);
 
     if (!base || !eventId) return;
     try {
@@ -205,8 +217,42 @@ export default function LivePlayersMap({
     }
   }, [base, eventId]);
 
+  const handlePosition = useCallback(
+    (pos: GeolocationPosition) => {
+      const lat = pos.coords?.latitude;
+      const lng = pos.coords?.longitude;
+      if (typeof lat !== "number" || typeof lng !== "number") return;
+
+      const accuracy = typeof pos.coords?.accuracy === "number" ? pos.coords.accuracy : null;
+      const fix = {
+        lat: clamp(lat, -90, 90),
+        lng: clamp(lng, -180, 180),
+        accuracy,
+        at: Date.now(),
+      };
+      setDeviceFix(fix);
+
+      // If we only have a coarse location (IP/cell-tower), don't broadcast it as "live".
+      if (accuracy != null && Number.isFinite(accuracy) && accuracy > MAX_ACCEPTABLE_ACCURACY_M) {
+        setGpsWarning(`Low GPS accuracy (±${Math.round(accuracy)}m). Enable “Precise location” and try again.`);
+        return;
+      }
+
+      setGpsWarning(null);
+      void sendLiveLocation({
+        lat: fix.lat,
+        lng: fix.lng,
+        accuracy: fix.accuracy ?? undefined,
+        heading: pos.coords?.heading ?? undefined,
+        speed: pos.coords?.speed ?? undefined,
+      });
+    },
+    [sendLiveLocation]
+  );
+
   const startSharing = useCallback(() => {
     setError(null);
+    setGpsWarning(null);
     if (!base || !eventId) {
       setError("Missing backend URL");
       return;
@@ -222,30 +268,28 @@ export default function LivePlayersMap({
       // ignore
     }
 
-    const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const lat = pos.coords?.latitude;
-        const lng = pos.coords?.longitude;
-        if (typeof lat !== "number" || typeof lng !== "number") return;
-        void sendLiveLocation({
-          lat: clamp(lat, -90, 90),
-          lng: clamp(lng, -180, 180),
-          accuracy: pos.coords?.accuracy ?? undefined,
-          heading: pos.coords?.heading ?? undefined,
-          speed: pos.coords?.speed ?? undefined,
-        });
+    // First fix: request a current GPS reading (some browsers return an old/cached watch fix initially)
+    navigator.geolocation.getCurrentPosition(
+      handlePosition,
+      () => {
+        // ignore; watchPosition below will surface errors
       },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 }
+    );
+
+    const watchId = navigator.geolocation.watchPosition(
+      handlePosition,
       (err) => {
         setError(err?.message || "Failed to read device location");
         void stopSharing();
       },
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 10_000 }
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 }
     );
 
     watchIdRef.current = watchId;
     setSharing(true);
     autoFitRef.current = false;
-  }, [base, eventId, sendLiveLocation, stopSharing]);
+  }, [base, eventId, handlePosition, stopSharing]);
 
   useEffect(() => {
     unmountedRef.current = false;
@@ -376,6 +420,8 @@ export default function LivePlayersMap({
     ? `Live now: ${playersOnline} • updated ${Math.max(0, Math.round((Date.now() - lastSyncAt) / 1000))}s ago`
     : `Live now: ${playersOnline}`;
 
+  const myServerFix = useMemo(() => locations.find((l) => l.isMe) ?? null, [locations]);
+
   return (
     <div className="rounded-2xl bg-white/70 ring-1 ring-slate-200/70 p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -415,10 +461,32 @@ export default function LivePlayersMap({
       </div>
 
       {error ? <div className="mt-3 text-xs text-rose-700">{error}</div> : null}
+      {gpsWarning ? <div className="mt-3 text-xs text-amber-800">{gpsWarning}</div> : null}
 
       <div className="mt-4 overflow-hidden rounded-2xl ring-1 ring-slate-200/70 bg-slate-50">
         <div ref={containerRef} style={{ height }} />
       </div>
+
+      {sharing ? (
+        <div className="mt-3 grid gap-1 text-[11px] text-slate-600">
+          <div>
+            <span className="text-slate-500">Device:</span>{" "}
+            {deviceFix
+              ? `${deviceFix.lat.toFixed(5)}, ${deviceFix.lng.toFixed(5)} (±${Math.round(
+                  deviceFix.accuracy ?? 0
+                )}m) • ${Math.max(0, Math.round((Date.now() - deviceFix.at) / 1000))}s ago`
+              : "waiting for GPS…"}
+          </div>
+          <div>
+            <span className="text-slate-500">Server:</span>{" "}
+            {myServerFix
+              ? `${myServerFix.lat.toFixed(5)}, ${myServerFix.lng.toFixed(5)} • ${new Date(
+                  myServerFix.updatedAt
+                ).toLocaleTimeString()}`
+              : "not received yet…"}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mt-3 text-xs text-slate-600">
         Tip: if you don’t see your marker, press “Fit players” (you may be far from the event pin).

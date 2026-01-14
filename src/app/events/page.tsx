@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 import MapPreview from "@/components/MapPreview";
 import LivePlayersMap from "@/components/LivePlayersMap";
 
@@ -84,7 +85,7 @@ export default function EventsPage() {
   const creatingRef = useRef(false);
   const joiningRef = useRef<string | null>(null);
 
-  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+  const base = useMemo(() => getBackendBaseUrl(), []);
 
   const refresh = useCallback(async () => {
     if (!base) return;

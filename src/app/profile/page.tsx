@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type BackendUser = Record<string, unknown>;
 
@@ -38,6 +39,7 @@ function nameFromBackendUser(user: BackendUser): string {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const base = useMemo(() => getBackendBaseUrl(), []);
   const [user, setUser] = useState<BackendUser | null>(null);
   const [avatarVersion, setAvatarVersion] = useState<number>(0);
   const [file, setFile] = useState<File | null>(null);
@@ -60,7 +62,6 @@ export default function ProfilePage() {
     } catch {}
 
     const load = async () => {
-      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
       if (!base) {
         router.replace("/auth/login");
         return;
@@ -82,7 +83,7 @@ export default function ProfilePage() {
     };
 
     load().catch(() => setMessage("Failed to load profile"));
-  }, [router]);
+  }, [base, router]);
 
   const handleUpload = async () => {
     setMessage(null);

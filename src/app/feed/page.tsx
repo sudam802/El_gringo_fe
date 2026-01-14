@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type FeedMedia = { type: "image" | "video"; url: string };
 type FeedPost = {
@@ -107,7 +108,7 @@ function messageFromBody(parsed: { isJson: boolean; body: unknown }): string | n
 
 export default function FeedPage() {
   const router = useRouter();
-  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+  const base = useMemo(() => getBackendBaseUrl(), []);
 
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);

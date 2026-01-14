@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LandingHero from "./components/LandingHero";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 export default function HomePage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+    const base = getBackendBaseUrl();
 
     const checkAuth = async () => {
       try {

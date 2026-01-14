@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader, clearAuthToken } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type BackendUser = Record<string, unknown>;
 
@@ -31,7 +32,7 @@ export default function Navbar() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      const base = getBackendBaseUrl();
       if (!base) {
         console.error("Missing NEXT_PUBLIC_BACKEND_URL (set it in Vercel env vars and redeploy)");
         setUser(null);
@@ -92,7 +93,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+      const base = getBackendBaseUrl();
       if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
       await fetch(`${base}/api/auth/logout`, {
         method: "POST",

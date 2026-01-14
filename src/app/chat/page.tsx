@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import UserAvatar from "@/components/UserAvatar";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type Friend = { id?: string; _id?: string; username?: string; email?: string };
 
@@ -17,7 +18,7 @@ function displayName(u: Friend): string {
 
 export default function Chat() {
   const router = useRouter();
-  const base = String(process.env.NEXT_PUBLIC_BACKEND_URL || "").trim().replace(/\/+$/, "");
+  const base = getBackendBaseUrl();
   const fetchedRef = useRef(false);
 
   const [friends, setFriends] = useState<Friend[]>([]);

@@ -12,6 +12,7 @@ import {
 } from "stream-chat-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { authHeader } from "@/lib/authToken";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type StreamTokenResponse = {
   apiKey: string;
@@ -42,9 +43,8 @@ export default function ChatPage() {
         setChatClient(null);
         setServerChannelId(null);
 
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-        if (!backendUrl) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
-        const base = String(backendUrl).trim().replace(/\/+$/, "");
+        const base = getBackendBaseUrl();
+        if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
 
         const statusRes = await fetch(
           `${base}/api/friends/status?userId=${encodeURIComponent(partnerId)}`,
