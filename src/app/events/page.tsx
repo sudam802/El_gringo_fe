@@ -598,21 +598,6 @@ export default function EventsPage() {
                           </div>
 
                           {hasCoords ? (
-                            <div className="mt-4">
-                              <MapPreview
-                                lat={coords!.lat}
-                                lng={coords!.lng}
-                                label={ev.locationName?.trim() || ev.title}
-                                height={260}
-                              />
-                            </div>
-                          ) : (
-                            <div className="mt-4 text-sm text-slate-600">
-                              No map available for this event (missing coordinates).
-                            </div>
-                          )}
-
-                          {hasCoords ? (
                             ev.joined ? (
                               <div className="mt-4">
                                 <LivePlayersMap
@@ -624,11 +609,23 @@ export default function EventsPage() {
                                 />
                               </div>
                             ) : (
-                              <div className="mt-4 text-sm text-slate-600">
-                                Join this event to share your live location and see other arrived players.
+                              <div className="mt-4">
+                                <MapPreview
+                                  lat={coords!.lat}
+                                  lng={coords!.lng}
+                                  label={ev.locationName?.trim() || ev.title}
+                                  height={260}
+                                />
+                                <div className="mt-3 text-sm text-slate-600">
+                                  Join this event to share your live location and see other arrived players.
+                                </div>
                               </div>
                             )
-                          ) : null}
+                          ) : (
+                            <div className="mt-4 text-sm text-slate-600">
+                              No map available for this event (missing coordinates).
+                            </div>
+                          )}
                         </div>
                       </div>
                     ) : null}

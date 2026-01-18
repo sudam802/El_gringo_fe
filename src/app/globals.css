@@ -164,7 +164,7 @@ body {
   height: 46px;
   border-radius: 9999px;
   transform: translate(-50%, -50%);
-  background: rgba(59, 130, 246, 0.18);
+  background: rgba(34, 197, 94, 0.18);
   animation: app-glow-pulse 1000ms ease-out infinite;
 }
 
@@ -176,17 +176,17 @@ body {
   height: 16px;
   border-radius: 9999px;
   transform: translate(-50%, -50%);
-  background: #2563eb;
+  background: #16a34a;
   border: 2px solid rgba(255, 255, 255, 0.95);
   animation: app-live-blink 1100ms ease-in-out infinite;
 }
 
 .app-live-marker--me .app-live-marker__pulse {
-  background: rgba(34, 197, 94, 0.18);
+  background: rgba(59, 130, 246, 0.18);
 }
 
 .app-live-marker--me .app-live-marker__dot {
-  background: #16a34a;
+  background: #2563eb;
 }
 
 .app-live-marker__label {
