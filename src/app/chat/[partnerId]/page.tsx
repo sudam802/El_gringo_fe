@@ -65,8 +65,9 @@ export default function ChatPage() {
         const qs = new URLSearchParams();
         qs.set("partnerId", partnerId);
         qs.set("partnerName", partnerName);
-        const res = await fetch(`/api/stream/token?${qs.toString()}`, {
+        const res = await fetch(`${base}/api/stream/token?${qs.toString()}`, {
           cache: "no-store",
+          credentials: "include",
           headers: authHeader(),
         });
 

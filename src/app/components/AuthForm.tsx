@@ -88,7 +88,15 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setGeoError(null);
     const controller = new AbortController();
     const t = setTimeout(() => {
-      fetch(`/api/geo/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
+      const base = getBackendBaseUrl();
+      if (!base) {
+        setGeoResults([]);
+        setGeoError("Missing NEXT_PUBLIC_BACKEND_URL");
+        setGeoLoading(false);
+        return;
+      }
+
+      fetch(`${base}/api/geo/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
         .then(async (r) => {
           if (!r.ok) throw new Error("Search failed");
           const data = (await r.json()) as { results?: GeoResult[] };
@@ -131,7 +139,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
         setLocationCoords({ lat, lng });
 
         try {
-          const res = await fetch(`/api/geo/reverse?lat=${lat}&lng=${lng}`);
+          const base = getBackendBaseUrl();
+          if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
+          const res = await fetch(`${base}/api/geo/reverse?lat=${lat}&lng=${lng}`);
           const data = (await res.json()) as { displayName?: string | null };
           if (res.ok && data.displayName) {
             setLocation(data.displayName);
@@ -154,11 +164,14 @@ export default function AuthForm({ mode }: AuthFormProps) {
 
   const uploadAvatarIfNeeded = async () => {
     if (!avatarFile) return;
+    const base = getBackendBaseUrl();
+    if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
     const formData = new FormData();
     formData.set("file", avatarFile);
 
-    const res = await fetch("/api/avatar", {
+    const res = await fetch(`${base}/api/avatar`, {
       method: "POST",
+      credentials: "include",
       headers: authHeader(),
       body: formData,
     });

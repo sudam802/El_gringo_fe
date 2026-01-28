@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
+import { getBackendBaseUrl } from "@/lib/backendBaseUrl";
 
 type Props = {
   userId: string;
@@ -31,7 +32,9 @@ export default function UserAvatar({
   const [failed, setFailed] = useState(false);
 
   const src = useMemo(() => {
-    const base = `/api/avatar/${encodeURIComponent(userId)}`;
+    const backendBase = getBackendBaseUrl();
+    const basePath = `/api/avatar/${encodeURIComponent(userId)}`;
+    const base = backendBase ? `${backendBase}${basePath}` : basePath;
     if (!version) return base;
     return `${base}?v=${version}`;
   }, [userId, version]);

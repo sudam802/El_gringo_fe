@@ -98,9 +98,15 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
+      if (!base) throw new Error("Missing NEXT_PUBLIC_BACKEND_URL");
       const formData = new FormData();
       formData.set("file", file);
-      const res = await fetch("/api/avatar", { method: "POST", headers: authHeader(), body: formData });
+      const res = await fetch(`${base}/api/avatar`, {
+        method: "POST",
+        credentials: "include",
+        headers: authHeader(),
+        body: formData,
+      });
       const data = (await res.json()) as { message?: string; avatarUrl?: string };
       if (!res.ok) {
         throw new Error(data.message || "Upload failed");

@@ -25,6 +25,8 @@ type SuggestionUser = {
   skillLevel?: string;
 };
 
+type Friend = { id?: string; _id?: string; username?: string; fullName?: string; email?: string };
+
 type FriendRequest = {
   from: { id?: string; _id?: string; username?: string; fullName?: string; email?: string };
   createdAt: string;
@@ -114,6 +116,7 @@ export default function FeedPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [suggestions, setSuggestions] = useState<SuggestionUser[]>([]);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [friends, setFriends] = useState<Friend[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,18 +144,20 @@ export default function FeedPage() {
 
     setError(null);
     const headers = authHeader();
-    const [feedRes, eventsRes, suggestionsRes, requestsRes] = await Promise.all([
+    const [feedRes, eventsRes, suggestionsRes, requestsRes, friendsRes] = await Promise.all([
       fetch(`${base}/api/feed`, { credentials: "include", headers }),
       fetch(`${base}/api/events`, { credentials: "include", headers }),
       fetch(`${base}/api/friends/suggestions?limit=6`, { credentials: "include", headers }),
       fetch(`${base}/api/friends/requests`, { credentials: "include", headers }),
+      fetch(`${base}/api/friends`, { credentials: "include", headers }),
     ]);
 
     if (
       feedRes.status === 401 ||
       eventsRes.status === 401 ||
       suggestionsRes.status === 401 ||
-      requestsRes.status === 401
+      requestsRes.status === 401 ||
+      friendsRes.status === 401
     ) {
       router.push("/auth/login");
       return;
@@ -193,6 +198,16 @@ export default function FeedPage() {
         const data = parsed.body as { requests?: FriendRequest[] };
         setRequests(Array.isArray(data?.requests) ? data.requests : []);
       }
+    }
+
+    if (friendsRes.ok) {
+      const parsed = await readJsonOrText(friendsRes);
+      if (parsed.isJson) {
+        const data = parsed.body as { friends?: Friend[] };
+        setFriends(Array.isArray(data?.friends) ? data.friends : []);
+      }
+    } else {
+      setFriends([]);
     }
   }, [base, router]);
 
@@ -792,6 +807,47 @@ export default function FeedPage() {
                 >
                   Edit profile
                 </button>
+              </div>
+            </section>
+
+            <section className="rounded-2xl bg-white/80 ring-1 ring-slate-200/70 shadow-sm overflow-hidden backdrop-blur">
+              <div className="px-4 py-3 border-b border-slate-200/70 bg-gradient-to-r from-white to-slate-50">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm font-semibold text-gray-900">Friends</div>
+                  <div className="text-xs text-gray-500">{friends.length}</div>
+                </div>
+              </div>
+              <div className="p-4 space-y-3">
+                {friends.length === 0 ? (
+                  <div className="text-sm text-gray-600">
+                    No accepted friends yet. Add friends from “People you may know”.
+                  </div>
+                ) : (
+                  friends.map((f) => {
+                    const id = toIdString(f.id ?? f._id);
+                    const name = displayName(f);
+                    return (
+                      <button
+                        key={id || name}
+                        type="button"
+                        className="w-full flex items-center gap-3 text-left hover:bg-white/60 transition rounded-xl p-2"
+                        onClick={() =>
+                          router.push(`/chat/${encodeURIComponent(id)}?name=${encodeURIComponent(name)}`)
+                        }
+                        disabled={!id}
+                      >
+                        {id ? <UserAvatar userId={id} name={name} size={36} /> : null}
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-semibold text-gray-900 truncate">{name}</div>
+                          <div className="text-xs text-gray-600 truncate">Tap to chat</div>
+                        </div>
+                        <span className="rounded-xl bg-slate-100 px-3 py-1.5 text-xs text-slate-900">
+                          Chat
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
               </div>
             </section>
           </aside>

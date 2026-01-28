@@ -162,7 +162,7 @@ export default function EventsPage() {
     setGeoError(null);
     const controller = new AbortController();
     const t = setTimeout(() => {
-      fetch(`/api/geo/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
+      fetch(`${base}/api/geo/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
         .then(async (r) => {
           if (!r.ok) throw new Error("Search failed");
           const data = (await r.json()) as { results?: GeoResult[] };
